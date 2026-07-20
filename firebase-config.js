@@ -11,20 +11,27 @@
       controlado por un administrador.
    ============================================================ */
 
-const firebaseConfig = {
-  apiKey: "REEMPLAZAR_API_KEY",
-  authDomain: "REEMPLAZAR.firebaseapp.com",
-  projectId: "REEMPLAZAR_PROJECT_ID",
-  storageBucket: "REEMPLAZAR.appspot.com",
-  messagingSenderId: "REEMPLAZAR_SENDER_ID",
-  appId: "REEMPLAZAR_APP_ID"
-};
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
-firebase.initializeApp(firebaseConfig);
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDnW1S6nZmIYkuKl3gZ_J8e3d3lsN8D6w",
+    authDomain: "inventario-vive.firebaseapp.com",
+    projectId: "inventario-vive",
+    storageBucket: "inventario-vive.firebasestorage.app",
+    messagingSenderId: "84860026188",
+    appId: "1:84860026188:web:f8044563aec73aa65563e9",
+    measurementId: "G-000WHK1114"
+  };
 
-// Instancias globales usadas por el resto de la aplicación
-const auth = firebase.auth();
-const db = firebase.firestore();
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
 // Habilita persistencia de sesión en el navegador
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
