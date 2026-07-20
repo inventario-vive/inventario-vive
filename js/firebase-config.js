@@ -11,13 +11,15 @@
       controlado por un administrador.
    ============================================================ */
 
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "REEMPLAZAR_API_KEY",
-  authDomain: "REEMPLAZAR.firebaseapp.com",
-  projectId: "REEMPLAZAR_PROJECT_ID",
-  storageBucket: "REEMPLAZAR.appspot.com",
-  messagingSenderId: "REEMPLAZAR_SENDER_ID",
-  appId: "REEMPLAZAR_APP_ID"
+  apiKey: "AIzaSyDDnW1S6nZmIYkuKl3gZ_J8e3d3lsN8D6w",
+  authDomain: "inventario-vive.firebaseapp.com",
+  projectId: "inventario-vive",
+  storageBucket: "inventario-vive.firebasestorage.app",
+  messagingSenderId: "84860026188",
+  appId: "1:84860026188:web:f8044563aec73aa65563e9",
+  measurementId: "G-000WHK1114"
 };
 
 firebase.initializeApp(firebaseConfig);
