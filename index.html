@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vive Telecom · Inventario de Recursos</title>
+
+<!-- Tipografía corporativa -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Iconos (Lucide) -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- React (sin build step) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Firebase (compat SDK, sin bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="root">
+  <div class="boot-screen">
+    <div class="boot-logo">VIVE<span>TELECOM</span></div>
+    <div class="boot-label">Cargando inventario…</div>
+  </div>
+</div>
+
+<!-- Config e inicialización de Firebase (script normal, NO babel) -->
+<script src="js/firebase-config.js"></script>
+
+<!-- Utilidades compartidas -->
+<script type="text/babel" data-presets="react" src="js/utils.js"></script>
+
+<!-- Componentes de interfaz reutilizables -->
+<script type="text/babel" data-presets="react" src="js/components.js"></script>
+
+<!-- Módulos / pantallas -->
+<script type="text/babel" data-presets="react" src="js/modules/Login.js"></script>
+<script type="text/babel" data-presets="react" src="js/modules/Dashboard.js"></script>
+<script type="text/babel" data-presets="react" src="js/modules/Empresas.js"></script>
+<script type="text/babel" data-presets="react" src="js/modules/Recursos.js"></script>
+<script type="text/babel" data-presets="react" src="js/modules/Placeholder.js"></script>
+
+<!-- App principal: layout, router y montaje -->
+<script type="text/babel" data-presets="react" src="js/app.js"></script>
+
+</body>
+</html>
