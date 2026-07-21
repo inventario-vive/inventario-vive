@@ -153,6 +153,48 @@ function DataTable({ columns, rows, searchPlaceholder = "Buscar…", actions, em
   );
 }
 
+// ---------- Checklist de selección múltiple de recursos ----------
+function RecursoChecklist({ recursos, selected, onToggle, emptyLabel = "No hay recursos que coincidan." }) {
+  const [search, setSearch] = useState("");
+
+  const filtrados = useMemo(() => {
+    if (!search.trim()) return recursos;
+    const q = search.trim().toLowerCase();
+    return recursos.filter((r) =>
+      [r.codigo, r.tipo, r.marca, r.modelo].some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }, [recursos, search]);
+
+  return (
+    <div>
+      <div className="table-search" style={{ marginBottom: 10 }}>
+        <Icon name="search" size={15} />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar recurso…" />
+      </div>
+      <div style={{ border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", maxHeight: 220, overflowY: "auto" }}>
+        {filtrados.length === 0 && (
+          <div style={{ padding: 16, fontSize: 13, color: "var(--color-text-secondary)" }}>{emptyLabel}</div>
+        )}
+        {filtrados.map((r) => (
+          <label
+            key={r.id}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "9px 12px", borderBottom: "1px solid var(--color-border)",
+              fontSize: 13.5, cursor: "pointer",
+            }}
+          >
+            <input type="checkbox" checked={selected.includes(r.id)} onChange={() => onToggle(r.id)} />
+            <span style={{ fontWeight: 600 }}>{r.codigo}</span>
+            <span style={{ color: "var(--color-text-secondary)" }}>{r.tipo} · {r.marca} {r.modelo}</span>
+          </label>
+        ))}
+      </div>
+      <div className="form-hint" style={{ marginTop: 6 }}>{selected.length} recurso(s) seleccionado(s)</div>
+    </div>
+  );
+}
+
 // ---------- Sidebar (menú agrupado) ----------
 const MENU_GROUPS = [
   {
@@ -200,7 +242,10 @@ const MENU_GROUPS = [
 function Sidebar({ current, onNavigate, open }) {
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
-      <div className="sidebar-logo">VIVE <span>TELECOM</span></div>
+      <div className="sidebar-logo">
+        VIVE <span>TELECOM</span>
+        <span className="version-badge">v{APP_VERSION}</span>
+      </div>
       {MENU_GROUPS.map((group) => (
         <div className="sidebar-section" key={group.title}>
           <div className="sidebar-section-title">{group.title}</div>

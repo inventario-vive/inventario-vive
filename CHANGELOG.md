@@ -3,6 +3,23 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.5.0] — Devoluciones y Transferencias
+
+### Agregado
+- Módulo **Devoluciones**: selección de funcionario + recursos actualmente
+  asignados a él, definición del estado resultante (disponible, en
+  reparación, en mantenimiento, dado de baja), documento de devolución
+  imprimible con espacio de firma.
+- Módulo **Transferencias**: selección de uno o varios recursos y de un
+  destino (empresa → sucursal → departamento → nuevo responsable opcional
+  en cascada), documento de transferencia imprimible con el detalle de
+  origen y destino de cada recurso.
+- Ambos módulos actualizan el estado y la ubicación del recurso
+  automáticamente y registran el movimiento en su historial.
+- Se extrajo el componente de selección múltiple de recursos
+  (`RecursoChecklist`) a `components.js` para reutilizarlo entre
+  Asignaciones, Devoluciones y Transferencias.
+
 ## [0.4.0] — Asignaciones y documento de entrega
 
 ### Agregado

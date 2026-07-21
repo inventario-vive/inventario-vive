@@ -2,6 +2,9 @@
    VIVE TELECOM — Utilidades compartidas
    ============================================================ */
 
+// Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
+const APP_VERSION = "0.5.0";
+
 const { useState, useEffect, useMemo, useCallback } = React;
 
 // Estados posibles de un recurso (spec funcional, sección 4)

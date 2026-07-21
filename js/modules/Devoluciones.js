@@ -1,27 +1,30 @@
 /* ============================================================
-   VIVE TELECOM — Asignaciones
+   VIVE TELECOM — Devoluciones
    ============================================================ */
 
-function AsignacionForm({ funcionarios, recursos, empresas, sucursales, departamentos, onCancel, onSaved }) {
+const ESTADOS_POST_DEVOLUCION = [
+  { value: "disponible", label: "Disponible" },
+  { value: "en_reparacion", label: "En reparación" },
+  { value: "en_mantenimiento", label: "En mantenimiento" },
+  { value: "dado_de_baja", label: "Dado de baja" },
+];
+
+function DevolucionForm({ funcionarios, recursos, empresas, onCancel, onSaved }) {
   const [funcionarioId, setFuncionarioId] = useState("");
   const [recursosSel, setRecursosSel] = useState([]);
-  const [fechaEntrega, setFechaEntrega] = useState(new Date().toISOString().slice(0, 10));
-  const [responsableEntrega, setResponsableEntrega] = useState(auth.currentUser?.email || "");
+  const [estadoRecurso, setEstadoRecurso] = useState("disponible");
+  const [fechaDevolucion, setFechaDevolucion] = useState(new Date().toISOString().slice(0, 10));
+  const [responsableRecibe, setResponsableRecibe] = useState(auth.currentUser?.email || "");
   const [observaciones, setObservaciones] = useState("");
   const [saving, setSaving] = useState(false);
 
   const funcionario = funcionarios.find((f) => f.id === funcionarioId);
   const empresaNombre = (id) => empresas.find((e) => e.id === id)?.nombre || "—";
-  const sucursalNombre = (id) => sucursales.find((s) => s.id === id)?.nombre || "—";
-  const departamentoNombre = (id) => departamentos.find((d) => d.id === id)?.nombre || "—";
 
-  const recursosDisponibles = useMemo(() => {
-    const disponibles = recursos.filter((r) => r.estado === "disponible");
-    if (funcionario?.empresaId) {
-      return disponibles.filter((r) => !r.empresaId || r.empresaId === funcionario.empresaId);
-    }
-    return disponibles;
-  }, [recursos, funcionario]);
+  const recursosDelFuncionario = useMemo(
+    () => recursos.filter((r) => r.responsableId === funcionarioId && r.estado === "asignado"),
+    [recursos, funcionarioId]
+  );
 
   const toggleRecurso = (id) => {
     setRecursosSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -29,8 +32,8 @@ function AsignacionForm({ funcionarios, recursos, empresas, sucursales, departam
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!funcionarioId) return alert("Seleccioná el funcionario que recibe los recursos.");
-    if (recursosSel.length === 0) return alert("Seleccioná al menos un recurso para entregar.");
+    if (!funcionarioId) return alert("Seleccioná el funcionario que devuelve los recursos.");
+    if (recursosSel.length === 0) return alert("Seleccioná al menos un recurso a devolver.");
     setSaving(true);
     try {
       const recursosSnapshot = recursosSel.map((id) => {
@@ -38,62 +41,43 @@ function AsignacionForm({ funcionarios, recursos, empresas, sucursales, departam
         return { id: r.id, codigo: r.codigo, tipo: r.tipo, marca: r.marca || "", modelo: r.modelo || "", numeroSerie: r.numeroSerie || "" };
       });
 
-      const asignacionRef = await db.collection("asignaciones").add({
+      const nuevaDevolucion = {
+        id: null,
         funcionarioId,
         funcionarioSnapshot: { nombre: funcionario.nombre, documento: funcionario.documento || "", cargo: funcionario.cargo || "" },
-        empresaId: funcionario.empresaId || "",
         empresaSnapshot: empresaNombre(funcionario.empresaId),
-        sucursalId: funcionario.sucursalId || "",
-        sucursalSnapshot: sucursalNombre(funcionario.sucursalId),
-        departamentoId: funcionario.departamentoId || "",
-        departamentoSnapshot: departamentoNombre(funcionario.departamentoId),
-        fechaEntrega,
-        responsableEntrega,
-        observaciones,
-        recursosIds: recursosSel,
-        recursosSnapshot,
-        creadoEn: serverTimestamp(),
-        creadoPor: auth.currentUser?.email || "—",
-      });
-
-      const nuevaAsignacion = {
-        id: asignacionRef.id,
-        funcionarioId,
-        funcionarioSnapshot: { nombre: funcionario.nombre, documento: funcionario.documento || "", cargo: funcionario.cargo || "" },
-        empresaId: funcionario.empresaId || "",
-        empresaSnapshot: empresaNombre(funcionario.empresaId),
-        sucursalId: funcionario.sucursalId || "",
-        sucursalSnapshot: sucursalNombre(funcionario.sucursalId),
-        departamentoId: funcionario.departamentoId || "",
-        departamentoSnapshot: departamentoNombre(funcionario.departamentoId),
-        fechaEntrega,
-        responsableEntrega,
+        fechaDevolucion,
+        estadoRecurso,
+        responsableRecibe,
         observaciones,
         recursosIds: recursosSel,
         recursosSnapshot,
       };
 
-      // Actualiza cada recurso y registra su historial (spec funcional, secciones 5 y 6)
+      const ref = await db.collection("devoluciones").add({
+        ...nuevaDevolucion,
+        creadoEn: serverTimestamp(),
+        creadoPor: auth.currentUser?.email || "—",
+      });
+      nuevaDevolucion.id = ref.id;
+
       await Promise.all(recursosSel.map(async (id) => {
         await db.collection("recursos").doc(id).update({
-          estado: "asignado",
-          responsableId: funcionarioId,
-          empresaId: funcionario.empresaId || "",
-          sucursalId: funcionario.sucursalId || "",
-          departamentoId: funcionario.departamentoId || "",
+          estado: estadoRecurso,
+          responsableId: "",
           actualizadoEn: serverTimestamp(),
         });
         await registrarHistorial(id, {
-          tipo: "asignacion",
-          detalle: `Asignado a ${funcionario.nombre}${funcionario.cargo ? ` (${funcionario.cargo})` : ""}`,
+          tipo: "devolucion",
+          detalle: `Devuelto por ${funcionario.nombre} · Nuevo estado: ${estadoLabel(estadoRecurso)}`,
           usuario: auth.currentUser?.email || "—",
         });
       }));
 
-      onSaved(nuevaAsignacion);
+      onSaved(nuevaDevolucion);
     } catch (err) {
       console.error(err);
-      alert("Ocurrió un error al registrar la asignación.");
+      alert("Ocurrió un error al registrar la devolución.");
     }
     setSaving(false);
   };
@@ -101,82 +85,87 @@ function AsignacionForm({ funcionarios, recursos, empresas, sucursales, departam
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-block">
-        <div className="form-block-title">Funcionario que recibe</div>
+        <div className="form-block-title">Funcionario que devuelve</div>
         <div className="form-grid">
           <div className="form-field full">
             <label>Funcionario</label>
             <select required value={funcionarioId} onChange={(e) => { setFuncionarioId(e.target.value); setRecursosSel([]); }}>
               <option value="">Seleccionar funcionario…</option>
-              {funcionarios.filter((f) => f.estado !== "inactivo").map((f) => (
+              {funcionarios.map((f) => (
                 <option key={f.id} value={f.id}>{f.nombre}{f.cargo ? ` — ${f.cargo}` : ""}</option>
               ))}
             </select>
           </div>
-          {funcionario && (
-            <div className="form-field full" style={{ fontSize: 12.5, color: "var(--color-text-secondary)" }}>
-              {empresaNombre(funcionario.empresaId)}
-              {funcionario.sucursalId ? ` · ${sucursalNombre(funcionario.sucursalId)}` : ""}
-              {funcionario.departamentoId ? ` · ${departamentoNombre(funcionario.departamentoId)}` : ""}
-            </div>
-          )}
           <div className="form-field">
-            <label>Fecha de entrega</label>
-            <input type="date" required value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} />
+            <label>Fecha de devolución</label>
+            <input type="date" required value={fechaDevolucion} onChange={(e) => setFechaDevolucion(e.target.value)} />
           </div>
           <div className="form-field">
-            <label>Responsable que entrega</label>
-            <input required value={responsableEntrega} onChange={(e) => setResponsableEntrega(e.target.value)} />
+            <label>Responsable que recibe</label>
+            <input required value={responsableRecibe} onChange={(e) => setResponsableRecibe(e.target.value)} />
           </div>
         </div>
       </div>
 
       <div className="form-block">
-        <div className="form-block-title">Recursos a entregar</div>
+        <div className="form-block-title">Recursos a devolver</div>
         {!funcionarioId && (
-          <p className="form-hint" style={{ marginBottom: 8 }}>Elegí primero un funcionario para ver los recursos disponibles de su empresa.</p>
+          <p className="form-hint" style={{ marginBottom: 8 }}>Elegí primero un funcionario para ver los recursos que tiene asignados.</p>
         )}
-        <RecursoChecklist recursos={recursosDisponibles} selected={recursosSel} onToggle={toggleRecurso} />
+        <RecursoChecklist
+          recursos={recursosDelFuncionario}
+          selected={recursosSel}
+          onToggle={toggleRecurso}
+          emptyLabel="Este funcionario no tiene recursos asignados actualmente."
+        />
       </div>
 
       <div className="form-block">
-        <div className="form-block-title">Observaciones</div>
-        <div className="form-field full">
-          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Condición de los equipos, accesorios entregados, etc." />
+        <div className="form-block-title">Estado al momento de la devolución</div>
+        <div className="form-grid">
+          <div className="form-field full">
+            <label>Estado del recurso</label>
+            <select value={estadoRecurso} onChange={(e) => setEstadoRecurso(e.target.value)}>
+              {ESTADOS_POST_DEVOLUCION.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+            </select>
+            <span className="form-hint">Se aplicará a todos los recursos seleccionados. Si necesitás estados distintos por recurso, hacé devoluciones separadas.</span>
+          </div>
+          <div className="form-field full">
+            <label>Observaciones (conformidad de ambas partes)</label>
+            <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Condición física, accesorios devueltos, daños observados, etc." />
+          </div>
         </div>
       </div>
 
       <div className="modal-footer" style={{ padding: 0, border: "none", marginTop: 6 }}>
         <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
-        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Registrando…" : "Registrar asignación"}</Button>
+        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Registrando…" : "Registrar devolución"}</Button>
       </div>
     </form>
   );
 }
 
-// ---------- Documento de entrega imprimible (spec funcional, sección 7) ----------
-function DocumentoEntrega({ asignacion, onClose }) {
-  const handlePrint = () => window.print();
-
+function DocumentoDevolucion({ devolucion, onClose }) {
   return (
     <Modal
-      title="Documento de entrega"
+      title="Documento de devolución"
       onClose={onClose}
       width={720}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cerrar</Button>
-          <Button variant="primary" icon="printer" onClick={handlePrint}>Imprimir</Button>
+          <Button variant="primary" icon="printer" onClick={() => window.print()}>Imprimir</Button>
         </>
       }
     >
-      <div className="printable-doc" id="documento-entrega">
+      <div className="printable-doc">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
           <div>
             <div style={{ fontWeight: 800, fontSize: 18 }}>VIVE <span style={{ color: "#F54900" }}>TELECOM</span></div>
-            <div style={{ fontSize: 12, color: "#6B7280" }}>Documento de entrega de recursos</div>
+            <div style={{ fontSize: 12, color: "#6B7280" }}>Documento de devolución de recursos</div>
           </div>
           <div style={{ fontSize: 12, color: "#6B7280", textAlign: "right" }}>
-            Fecha: {formatDate(new Date(asignacion.fechaEntrega))}
+            Fecha: {formatDate(new Date(devolucion.fechaDevolucion))}
           </div>
         </div>
 
@@ -184,29 +173,25 @@ function DocumentoEntrega({ asignacion, onClose }) {
           <tbody>
             <tr>
               <td style={{ padding: "4px 0", color: "#6B7280", width: 140 }}>Funcionario</td>
-              <td style={{ padding: "4px 0", fontWeight: 600 }}>{asignacion.funcionarioSnapshot?.nombre}</td>
-            </tr>
-            <tr>
-              <td style={{ padding: "4px 0", color: "#6B7280" }}>Documento (CI)</td>
-              <td style={{ padding: "4px 0" }}>{asignacion.funcionarioSnapshot?.documento || "—"}</td>
+              <td style={{ padding: "4px 0", fontWeight: 600 }}>{devolucion.funcionarioSnapshot?.nombre}</td>
             </tr>
             <tr>
               <td style={{ padding: "4px 0", color: "#6B7280" }}>Cargo</td>
-              <td style={{ padding: "4px 0" }}>{asignacion.funcionarioSnapshot?.cargo || "—"}</td>
+              <td style={{ padding: "4px 0" }}>{devolucion.funcionarioSnapshot?.cargo || "—"}</td>
             </tr>
             <tr>
               <td style={{ padding: "4px 0", color: "#6B7280" }}>Empresa</td>
-              <td style={{ padding: "4px 0" }}>{asignacion.empresaSnapshot || "—"}</td>
+              <td style={{ padding: "4px 0" }}>{devolucion.empresaSnapshot || "—"}</td>
             </tr>
             <tr>
-              <td style={{ padding: "4px 0", color: "#6B7280" }}>Sucursal / Departamento</td>
-              <td style={{ padding: "4px 0" }}>{[asignacion.sucursalSnapshot, asignacion.departamentoSnapshot].filter(Boolean).join(" / ") || "—"}</td>
+              <td style={{ padding: "4px 0", color: "#6B7280" }}>Estado asignado tras devolución</td>
+              <td style={{ padding: "4px 0" }}>{estadoLabel(devolucion.estadoRecurso)}</td>
             </tr>
           </tbody>
         </table>
 
         <div style={{ fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", color: "#6B7280", marginBottom: 6 }}>
-          Recursos entregados
+          Recursos devueltos
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, marginBottom: 16 }}>
           <thead>
@@ -218,7 +203,7 @@ function DocumentoEntrega({ asignacion, onClose }) {
             </tr>
           </thead>
           <tbody>
-            {(asignacion.recursosSnapshot || []).map((r) => (
+            {(devolucion.recursosSnapshot || []).map((r) => (
               <tr key={r.id} style={{ borderBottom: "1px solid #F0F0F0" }}>
                 <td style={{ padding: "6px 4px" }}>{r.codigo}</td>
                 <td style={{ padding: "6px 4px" }}>{r.tipo}</td>
@@ -233,7 +218,7 @@ function DocumentoEntrega({ asignacion, onClose }) {
           Observaciones
         </div>
         <div style={{ minHeight: 40, border: "1px solid #E5E7EB", borderRadius: 6, padding: 10, fontSize: 13, marginBottom: 30 }}>
-          {asignacion.observaciones || "—"}
+          {devolucion.observaciones || "—"}
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 50 }}>
@@ -244,7 +229,7 @@ function DocumentoEntrega({ asignacion, onClose }) {
           </div>
           <div style={{ textAlign: "center", width: "45%" }}>
             <div style={{ borderTop: "1px solid #111", paddingTop: 6, fontSize: 12.5 }}>
-              Firma del responsable de TI ({asignacion.responsableEntrega})
+              Firma del responsable que recibe ({devolucion.responsableRecibe})
             </div>
           </div>
         </div>
@@ -253,44 +238,35 @@ function DocumentoEntrega({ asignacion, onClose }) {
   );
 }
 
-function Asignaciones() {
-  const { data: asignaciones, loading } = useCollection("asignaciones", { orderByField: "creadoEn", orderDirection: "desc" });
+function Devoluciones() {
+  const { data: devoluciones, loading } = useCollection("devoluciones", { orderByField: "creadoEn", orderDirection: "desc" });
   const { data: funcionarios } = useCollection("funcionarios");
   const { data: recursos } = useCollection("recursos");
   const { data: empresas } = useCollection("empresas");
-  const { data: sucursales } = useCollection("sucursales");
-  const { data: departamentos } = useCollection("departamentos");
   const [showForm, setShowForm] = useState(false);
   const [viewingDoc, setViewingDoc] = useState(null);
-
-  const handleSaved = (nuevaAsignacion) => {
-    setShowForm(false);
-    setViewingDoc(nuevaAsignacion);
-  };
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Asignaciones</h1>
-          <p className="page-subtitle">Entrega de recursos a funcionarios, con documento para firma.</p>
+          <h1 className="page-title">Devoluciones</h1>
+          <p className="page-subtitle">Registro de recursos que un funcionario deja de utilizar.</p>
         </div>
-        <Button variant="primary" icon="plus" onClick={() => setShowForm(true)}>Nueva asignación</Button>
+        <Button variant="primary" icon="plus" onClick={() => setShowForm(true)}>Nueva devolución</Button>
       </div>
 
       <DataTable
-        emptyLabel={loading ? "Cargando asignaciones…" : "Todavía no hay asignaciones registradas."}
+        emptyLabel={loading ? "Cargando devoluciones…" : "Todavía no hay devoluciones registradas."}
         searchPlaceholder="Buscar por funcionario…"
         columns={[
-          { key: "fechaEntrega", label: "Fecha", render: (r) => formatDate(new Date(r.fechaEntrega)) },
+          { key: "fechaDevolucion", label: "Fecha", render: (r) => formatDate(new Date(r.fechaDevolucion)) },
           { key: "funcionarioSnapshot", label: "Funcionario", render: (r) => r.funcionarioSnapshot?.nombre || "—", searchValue: (r) => r.funcionarioSnapshot?.nombre },
           { key: "empresaSnapshot", label: "Empresa" },
           { key: "recursosSnapshot", label: "Recursos", render: (r) => `${(r.recursosSnapshot || []).length} recurso(s)` },
-          { key: "responsableEntrega", label: "Entregado por" },
+          { key: "estadoRecurso", label: "Estado resultante", render: (r) => <EstadoBadge estado={r.estadoRecurso} /> },
           {
-            key: "acciones",
-            label: "",
-            sortable: false,
+            key: "acciones", label: "", sortable: false,
             render: (row) => (
               <div className="row-actions">
                 <span className="icon-btn" title="Ver / imprimir documento" onClick={() => setViewingDoc(row)}><Icon name="file-text" size={15} /></span>
@@ -298,26 +274,22 @@ function Asignaciones() {
             ),
           },
         ]}
-        rows={asignaciones}
+        rows={devoluciones}
       />
 
       {showForm && (
-        <Modal title="Nueva asignación" onClose={() => setShowForm(false)} width={720}>
-          <AsignacionForm
+        <Modal title="Nueva devolución" onClose={() => setShowForm(false)} width={720}>
+          <DevolucionForm
             funcionarios={funcionarios}
             recursos={recursos}
             empresas={empresas}
-            sucursales={sucursales}
-            departamentos={departamentos}
             onCancel={() => setShowForm(false)}
-            onSaved={handleSaved}
+            onSaved={(d) => { setShowForm(false); setViewingDoc(d); }}
           />
         </Modal>
       )}
 
-      {viewingDoc && (
-        <DocumentoEntrega asignacion={viewingDoc} onClose={() => setViewingDoc(null)} />
-      )}
+      {viewingDoc && <DocumentoDevolucion devolucion={viewingDoc} onClose={() => setViewingDoc(null)} />}
     </div>
   );
 }
