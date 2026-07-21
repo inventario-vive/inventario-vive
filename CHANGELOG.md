@@ -3,6 +3,13 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.7.1] — Limpieza de menú
+
+### Quitado
+- Se eliminó el ítem "Inventario" del menú (quedaba duplicado en función
+  con "Recursos"). Todo el ciclo de vida y consulta de recursos se maneja
+  desde el módulo **Recursos**.
+
 ## [0.7.0] — Historial global y Reportes
 
 ### Agregado

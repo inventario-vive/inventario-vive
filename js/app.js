@@ -9,7 +9,6 @@ const MODULE_LABELS = {
   departamentos: "Departamentos",
   funcionarios: "Funcionarios",
   recursos: "Recursos",
-  inventario: "Inventario",
   asignaciones: "Asignaciones",
   transferencias: "Transferencias",
   devoluciones: "Devoluciones",

@@ -217,7 +217,6 @@ const MENU_GROUPS = [
     title: "Recursos",
     items: [
       { key: "recursos", label: "Recursos", icon: "laptop" },
-      { key: "inventario", label: "Inventario", icon: "package" },
     ],
   },
   {
