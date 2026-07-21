@@ -158,8 +158,8 @@ function DocumentoLetterhead({ subtitle }) {
   const { data: config } = useDoc("configuracion/general");
   return (
     <div>
-      {config?.logoUrl ? (
-        <img src={config.logoUrl} alt="Vive Telecom" style={{ maxHeight: 42, maxWidth: 220, objectFit: "contain" }} />
+      {config?.logoDataUrl ? (
+        <img src={config.logoDataUrl} alt="Vive Telecom" style={{ maxHeight: 42, maxWidth: 220, objectFit: "contain" }} />
       ) : (
         <div style={{ fontWeight: 800, fontSize: 18 }}>VIVE <span style={{ color: "#F54900" }}>TELECOM</span></div>
       )}
@@ -258,8 +258,8 @@ function Sidebar({ current, onNavigate, open }) {
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="sidebar-logo">
-        {config?.logoUrl ? (
-          <img src={config.logoUrl} alt="Vive Telecom" style={{ maxHeight: 30, maxWidth: 160, objectFit: "contain" }} />
+        {config?.logoDataUrl ? (
+          <img src={config.logoDataUrl} alt="Vive Telecom" style={{ maxHeight: 30, maxWidth: 160, objectFit: "contain" }} />
         ) : (
           <>VIVE <span>TELECOM</span></>
         )}
