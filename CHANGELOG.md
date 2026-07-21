@@ -3,6 +3,19 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.4.0] — Asignaciones y documento de entrega
+
+### Agregado
+- Módulo **Asignaciones**: selección de funcionario + selección múltiple de
+  recursos disponibles, generación automática del documento de entrega
+  (datos de Vive Telecom, funcionario, empresa/sucursal/departamento,
+  listado de recursos, espacio de observaciones, firmas) listo para imprimir.
+- Al registrar una asignación, cada recurso entregado cambia automáticamente
+  a estado "Asignado", queda vinculado al funcionario responsable y
+  registra el evento en su historial.
+- Estilos de impresión (`@media print`) para que el documento de entrega se
+  imprima limpio, sin el resto de la interfaz.
+
 ## [0.3.0] — Maestros organizacionales
 
 ### Agregado

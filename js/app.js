@@ -49,6 +49,7 @@ function AppShell({ user }) {
       case "departamentos": return <Departamentos />;
       case "funcionarios": return <Funcionarios />;
       case "recursos": return <Recursos />;
+      case "asignaciones": return <Asignaciones />;
       default: return <Placeholder label={MODULE_LABELS[route] || "Módulo"} />;
     }
   };

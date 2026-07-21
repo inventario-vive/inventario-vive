@@ -471,3 +471,19 @@ table.data-table tbody tr:hover { background: #FAFAFB; }
   .form-grid { grid-template-columns: 1fr; }
   .content { padding: 16px; }
 }
+
+/* ---------- Documento imprimible (Asignaciones / Devoluciones / Transferencias) ---------- */
+.printable-doc { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  .printable-doc, .printable-doc * { visibility: visible; }
+  .printable-doc {
+    display: block !important;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    padding: 24px;
+    color: #111;
+  }
+}
