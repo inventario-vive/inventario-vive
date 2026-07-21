@@ -9,7 +9,7 @@ const TIPOS_RECURSO = [
   "Licencia de software", "Equipo especial",
 ];
 
-function RecursoForm({ initial, empresas, onCancel, onSaved }) {
+function RecursoForm({ initial, empresas, sucursales, departamentos, funcionarios, onCancel, onSaved }) {
   const [form, setForm] = useState(
     initial || {
       codigo: generarCodigoInterno(),
@@ -20,16 +20,52 @@ function RecursoForm({ initial, empresas, onCancel, onSaved }) {
       numeroSerie: "",
       estado: "disponible",
       empresaId: "",
-      sucursal: "",
-      departamento: "",
-      responsable: "",
+      sucursalId: "",
+      departamentoId: "",
+      responsableId: "",
       fechaAdquisicion: "",
       observaciones: "",
     }
   );
   const [saving, setSaving] = useState(false);
 
-  const setField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const setField = (field) => (e) => {
+    const value = e.target.value;
+    if (field === "empresaId") {
+      const sucursalValida = sucursales.find((s) => s.id === form.sucursalId && s.empresaId === value);
+      const depValido = departamentos.find((d) => d.id === form.departamentoId && d.empresaId === value);
+      const respValido = funcionarios.find((f) => f.id === form.responsableId && f.empresaId === value);
+      setForm({
+        ...form,
+        empresaId: value,
+        sucursalId: sucursalValida ? form.sucursalId : "",
+        departamentoId: depValido ? form.departamentoId : "",
+        responsableId: respValido ? form.responsableId : "",
+      });
+    } else if (field === "sucursalId") {
+      const depValido = departamentos.find((d) => d.id === form.departamentoId && d.sucursalId === value);
+      setForm({ ...form, sucursalId: value, departamentoId: depValido ? form.departamentoId : "" });
+    } else {
+      setForm({ ...form, [field]: value });
+    }
+  };
+
+  const sucursalesFiltradas = useMemo(
+    () => sucursales.filter((s) => !form.empresaId || s.empresaId === form.empresaId),
+    [sucursales, form.empresaId]
+  );
+  const departamentosFiltrados = useMemo(
+    () => departamentos.filter((d) => {
+      if (form.sucursalId) return d.sucursalId === form.sucursalId;
+      if (form.empresaId) return d.empresaId === form.empresaId;
+      return true;
+    }),
+    [departamentos, form.empresaId, form.sucursalId]
+  );
+  const funcionariosFiltrados = useMemo(
+    () => funcionarios.filter((f) => !form.empresaId || f.empresaId === form.empresaId),
+    [funcionarios, form.empresaId]
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,15 +162,24 @@ function RecursoForm({ initial, empresas, onCancel, onSaved }) {
           </div>
           <div className="form-field">
             <label>Sucursal</label>
-            <input value={form.sucursal} onChange={setField("sucursal")} />
+            <select value={form.sucursalId} onChange={setField("sucursalId")}>
+              <option value="">Sin definir</option>
+              {sucursalesFiltradas.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+            </select>
           </div>
           <div className="form-field">
             <label>Departamento</label>
-            <input value={form.departamento} onChange={setField("departamento")} />
+            <select value={form.departamentoId} onChange={setField("departamentoId")}>
+              <option value="">Sin definir</option>
+              {departamentosFiltrados.map((d) => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+            </select>
           </div>
           <div className="form-field">
             <label>Responsable actual</label>
-            <input value={form.responsable} onChange={setField("responsable")} />
+            <select value={form.responsableId} onChange={setField("responsableId")}>
+              <option value="">Sin asignar</option>
+              {funcionariosFiltrados.map((f) => <option key={f.id} value={f.id}>{f.nombre}{f.cargo ? ` — ${f.cargo}` : ""}</option>)}
+            </select>
           </div>
           <div className="form-field">
             <label>Fecha de adquisición</label>
@@ -184,12 +229,16 @@ function RecursoHistorial({ recurso, onClose }) {
 function Recursos() {
   const { data: recursos, loading } = useCollection("recursos", { orderByField: "creadoEn", orderDirection: "desc" });
   const { data: empresas } = useCollection("empresas");
+  const { data: sucursales } = useCollection("sucursales");
+  const { data: departamentos } = useCollection("departamentos");
+  const { data: funcionarios } = useCollection("funcionarios");
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [viewingHistorial, setViewingHistorial] = useState(null);
 
   const empresaNombre = (id) => empresas.find((e) => e.id === id)?.nombre || "—";
+  const funcionarioNombre = (id) => funcionarios.find((f) => f.id === id)?.nombre || "—";
 
   const openNew = () => { setEditing(null); setShowForm(true); };
   const openEdit = (recurso) => { setEditing(recurso); setShowForm(true); };
@@ -222,7 +271,7 @@ function Recursos() {
           { key: "tipo", label: "Tipo" },
           { key: "marca", label: "Marca / Modelo", render: (r) => `${r.marca || "—"} ${r.modelo || ""}` },
           { key: "empresaId", label: "Empresa", render: (r) => empresaNombre(r.empresaId), searchValue: (r) => empresaNombre(r.empresaId) },
-          { key: "responsable", label: "Responsable" },
+          { key: "responsableId", label: "Responsable", render: (r) => funcionarioNombre(r.responsableId), searchValue: (r) => funcionarioNombre(r.responsableId) },
           { key: "estado", label: "Estado", render: (r) => <EstadoBadge estado={r.estado || "disponible"} /> },
           {
             key: "acciones",
@@ -245,6 +294,9 @@ function Recursos() {
           <RecursoForm
             initial={editing}
             empresas={empresas}
+            sucursales={sucursales}
+            departamentos={departamentos}
+            funcionarios={funcionarios}
             onCancel={() => setShowForm(false)}
             onSaved={() => setShowForm(false)}
           />

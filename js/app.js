@@ -45,6 +45,9 @@ function AppShell({ user }) {
     switch (route) {
       case "inicio": return <Dashboard onNavigate={navigate} />;
       case "empresas": return <Empresas />;
+      case "sucursales": return <Sucursales />;
+      case "departamentos": return <Departamentos />;
+      case "funcionarios": return <Funcionarios />;
       case "recursos": return <Recursos />;
       default: return <Placeholder label={MODULE_LABELS[route] || "Módulo"} />;
     }
