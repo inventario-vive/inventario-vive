@@ -3,7 +3,7 @@
    ============================================================ */
 
 // Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
-const APP_VERSION = "0.6.0";
+const APP_VERSION = "0.7.0";
 
 const { useState, useEffect, useMemo, useCallback } = React;
 
@@ -82,6 +82,60 @@ async function registrarHistorial(recursoId, evento) {
     ...evento,
     fecha: serverTimestamp(),
   });
+}
+
+// Hook: suscripción en tiempo real a un "collection group" (ej. todos los
+// subcolecciones "historial" de todos los recursos a la vez)
+function useCollectionGroup(name, { orderByField, orderDirection = "asc" } = {}) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let query = db.collectionGroup(name);
+    if (orderByField) query = query.orderBy(orderByField, orderDirection);
+
+    const unsubscribe = query.onSnapshot(
+      (snapshot) => {
+        setData(snapshot.docs.map((doc) => ({
+          id: doc.id,
+          recursoId: doc.ref.parent.parent ? doc.ref.parent.parent.id : null,
+          ...doc.data(),
+        })));
+        setLoading(false);
+      },
+      (err) => {
+        console.error(`Error leyendo collectionGroup(${name}):`, err);
+        setError(err);
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
+    // eslint-disable-next-line
+  }, [name, orderByField, orderDirection]);
+
+  return { data, loading, error };
+}
+
+// Descarga un arreglo de objetos como archivo CSV
+function exportCSV(filename, rows, columns) {
+  const escape = (val) => {
+    const s = val === null || val === undefined ? "" : String(val);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const header = columns.map((c) => escape(c.label)).join(";");
+  const body = rows.map((row) => columns.map((c) => escape(c.value(row))).join(";")).join("\n");
+  const csv = "\uFEFF" + header + "\n" + body;
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".csv") ? filename : `${filename}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function initials(name) {

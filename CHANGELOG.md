@@ -3,6 +3,26 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.7.0] — Historial global y Reportes
+
+### Agregado
+- Módulo **Historial**: vista consolidada de todos los eventos de todos
+  los recursos (altas, ediciones, asignaciones, devoluciones,
+  transferencias, mantenimiento, bajas) en un solo lugar, con filtro por
+  tipo de evento y búsqueda. Usa una consulta `collectionGroup` de
+  Firestore sobre todas las subcolecciones "historial" a la vez.
+- Módulo **Reportes**: distribución de recursos por estado, por tipo y por
+  empresa (con barras de proporción), y exportación a CSV (compatible con
+  Excel) de Recursos, Asignaciones, Devoluciones, Transferencias y Bajas.
+- `firestore.indexes.json`: definición del índice necesario para la
+  consulta de historial global.
+
+### Notas
+- La primera vez que se abra el módulo Historial, es posible que Firestore
+  pida crear un índice para la consulta `collectionGroup`. Firebase
+  muestra un enlace directo en la consola del navegador para crearlo con
+  un clic (una sola vez).
+
 ## [0.6.0] — Mantenimiento y Bajas
 
 ### Agregado

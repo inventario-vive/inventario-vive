@@ -1,0 +1,12 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "historial",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "fecha", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
