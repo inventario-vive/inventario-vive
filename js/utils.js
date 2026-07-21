@@ -3,7 +3,7 @@
    ============================================================ */
 
 // Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.6.0";
 
 const { useState, useEffect, useMemo, useCallback } = React;
 

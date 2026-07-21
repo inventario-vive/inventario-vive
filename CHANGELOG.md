@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.6.0] — Mantenimiento y Bajas
+
+### Agregado
+- Módulo **Mantenimiento**: envío de un recurso a mantenimiento preventivo
+  o reparación (con proveedor/técnico, fechas y motivo), seguimiento de
+  registros "en curso", y finalización con tres resultados posibles:
+  reparado (vuelve a Disponible o al responsable anterior si tenía uno),
+  no reparable (pasa a Bajas automáticamente), o continúa en curso.
+- Módulo **Bajas**: retiro definitivo de uno o varios recursos con motivo
+  formal (obsolescencia, daño irreparable, robo/pérdida, fin de vida útil,
+  venta/donación, otro), fecha y responsable. El recurso nunca se elimina
+  de la base — solo cambia a estado "Dado de baja", preservando todo su
+  historial, tal como exige la especificación funcional.
+
 ## [0.5.0] — Devoluciones y Transferencias
 
 ### Agregado
