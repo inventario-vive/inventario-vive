@@ -26,6 +26,7 @@ firebase.initializeApp(firebaseConfig);
 // Instancias globales usadas por el resto de la aplicación
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Habilita persistencia de sesión en el navegador
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);

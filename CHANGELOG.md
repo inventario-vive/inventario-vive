@@ -3,6 +3,22 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.8.0] — Configuración y logo de la empresa
+
+### Agregado
+- Módulo **Configuración**: carga del logo de Vive Telecom (PNG o JPG,
+  hasta 2 MB) a Firebase Storage, con vista previa y opción de quitarlo.
+- El logo cargado se usa automáticamente en el menú lateral y en el
+  encabezado de los documentos de entrega, devolución y transferencia
+  (componente compartido `DocumentoLetterhead`). Si no hay logo cargado,
+  se sigue usando el texto "VIVE TELECOM" como respaldo.
+- `storage.rules`: reglas de seguridad de Firebase Storage (solo usuarios
+  autenticados pueden leer/escribir).
+
+### Notas
+- Para que funcione, hay que habilitar **Firebase Storage** en la consola
+  del proyecto (si todavía no está habilitado) y publicar `storage.rules`.
+
 ## [0.7.1] — Limpieza de menú
 
 ### Quitado

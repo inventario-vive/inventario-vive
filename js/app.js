@@ -55,6 +55,7 @@ function AppShell({ user }) {
       case "bajas": return <Bajas />;
       case "historial": return <Historial />;
       case "reportes": return <Reportes />;
+      case "configuracion": return <Configuracion />;
       default: return <Placeholder label={MODULE_LABELS[route] || "Módulo"} />;
     }
   };

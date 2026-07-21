@@ -153,6 +153,21 @@ function DataTable({ columns, rows, searchPlaceholder = "Buscar…", actions, em
   );
 }
 
+// ---------- Membrete (logo real si fue cargado en Configuración, o texto de respaldo) ----------
+function DocumentoLetterhead({ subtitle }) {
+  const { data: config } = useDoc("configuracion/general");
+  return (
+    <div>
+      {config?.logoUrl ? (
+        <img src={config.logoUrl} alt="Vive Telecom" style={{ maxHeight: 42, maxWidth: 220, objectFit: "contain" }} />
+      ) : (
+        <div style={{ fontWeight: 800, fontSize: 18 }}>VIVE <span style={{ color: "#F54900" }}>TELECOM</span></div>
+      )}
+      <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>{subtitle}</div>
+    </div>
+  );
+}
+
 // ---------- Checklist de selección múltiple de recursos ----------
 function RecursoChecklist({ recursos, selected, onToggle, emptyLabel = "No hay recursos que coincidan." }) {
   const [search, setSearch] = useState("");
@@ -239,10 +254,15 @@ const MENU_GROUPS = [
 ];
 
 function Sidebar({ current, onNavigate, open }) {
+  const { data: config } = useDoc("configuracion/general");
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="sidebar-logo">
-        VIVE <span>TELECOM</span>
+        {config?.logoUrl ? (
+          <img src={config.logoUrl} alt="Vive Telecom" style={{ maxHeight: 30, maxWidth: 160, objectFit: "contain" }} />
+        ) : (
+          <>VIVE <span>TELECOM</span></>
+        )}
         <span className="version-badge">v{APP_VERSION}</span>
       </div>
       {MENU_GROUPS.map((group) => (

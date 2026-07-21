@@ -3,7 +3,7 @@
    ============================================================ */
 
 // Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
-const APP_VERSION = "0.7.1";
+const APP_VERSION = "0.8.0";
 
 const { useState, useEffect, useMemo, useCallback } = React;
 
@@ -46,6 +46,29 @@ function generarCodigoInterno(prefijo = "REC") {
   const d = String(now.getDate()).padStart(2, "0");
   const rand = Math.floor(1000 + Math.random() * 9000);
   return `${prefijo}-${y}${m}${d}-${rand}`;
+}
+
+// Hook: suscripción en tiempo real a un documento individual de Firestore
+function useDoc(path) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = db.doc(path).onSnapshot(
+      (snap) => {
+        setData(snap.exists ? snap.data() : null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error(`Error leyendo ${path}:`, err);
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
+    // eslint-disable-next-line
+  }, [path]);
+
+  return { data, loading };
 }
 
 // Hook: suscripción en tiempo real a una colección de Firestore

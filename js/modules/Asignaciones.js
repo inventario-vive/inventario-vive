@@ -171,10 +171,7 @@ function DocumentoEntrega({ asignacion, onClose }) {
     >
       <div className="printable-doc" id="documento-entrega">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>VIVE <span style={{ color: "#F54900" }}>TELECOM</span></div>
-            <div style={{ fontSize: 12, color: "#6B7280" }}>Documento de entrega de recursos</div>
-          </div>
+          <DocumentoLetterhead subtitle="Documento de entrega de recursos" />
           <div style={{ fontSize: 12, color: "#6B7280", textAlign: "right" }}>
             Fecha: {formatDate(new Date(asignacion.fechaEntrega))}
           </div>

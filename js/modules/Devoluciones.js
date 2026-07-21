@@ -160,10 +160,7 @@ function DocumentoDevolucion({ devolucion, onClose }) {
     >
       <div className="printable-doc">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>VIVE <span style={{ color: "#F54900" }}>TELECOM</span></div>
-            <div style={{ fontSize: 12, color: "#6B7280" }}>Documento de devolución de recursos</div>
-          </div>
+          <DocumentoLetterhead subtitle="Documento de devolución de recursos" />
           <div style={{ fontSize: 12, color: "#6B7280", textAlign: "right" }}>
             Fecha: {formatDate(new Date(devolucion.fechaDevolucion))}
           </div>
