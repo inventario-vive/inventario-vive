@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Regla base: solo usuarios autenticados (email/contraseña) del
+    // sistema pueden leer y escribir. Ajustar por colección cuando
+    // se incorporen roles (ej: solo admin puede eliminar empresas).
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+  }
+}
