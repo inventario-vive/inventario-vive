@@ -23,7 +23,7 @@ function Login() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo">VIVE<span>TELECOM</span></div>
+        <div className="login-logo">VIVE <span>TELECOM</span></div>
         <div className="login-subtitle">Sistema de Inventario de Recursos</div>
 
         {error && <div className="login-error">{error}</div>}

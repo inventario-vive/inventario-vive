@@ -200,7 +200,7 @@ const MENU_GROUPS = [
 function Sidebar({ current, onNavigate, open }) {
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
-      <div className="sidebar-logo">VIVE<span>TELECOM</span></div>
+      <div className="sidebar-logo">VIVE <span>TELECOM</span></div>
       {MENU_GROUPS.map((group) => (
         <div className="sidebar-section" key={group.title}>
           <div className="sidebar-section-title">{group.title}</div>

@@ -11,7 +11,6 @@
       controlado por un administrador.
    ============================================================ */
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDDnW1S6nZmIYkuKl3gZ_J8e3d3lsN8D6w",
   authDomain: "inventario-vive.firebaseapp.com",

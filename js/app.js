@@ -77,7 +77,7 @@ function App() {
   if (user === undefined) {
     return (
       <div className="boot-screen">
-        <div className="boot-logo">VIVE<span>TELECOM</span></div>
+        <div className="boot-logo">VIVE <span>TELECOM</span></div>
         <div className="boot-label">Verificando sesión…</div>
       </div>
     );
