@@ -27,12 +27,20 @@ function getRouteFromHash() {
 function AppShell({ user }) {
   const [route, setRoute] = useState(getRouteFromHash());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { rol, activo, loading: rolLoading } = useRolActual();
 
   useEffect(() => {
     const onHashChange = () => setRoute(getRouteFromHash());
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  useEffect(() => {
+    if (!rolLoading && activo === false) {
+      alert("Tu usuario fue desactivado. Contactá a un administrador del sistema.");
+      auth.signOut();
+    }
+  }, [rolLoading, activo]);
 
   const navigate = (key) => {
     window.location.hash = key;
@@ -55,14 +63,23 @@ function AppShell({ user }) {
       case "bajas": return <Bajas />;
       case "historial": return <Historial />;
       case "reportes": return <Reportes />;
-      case "configuracion": return <Configuracion />;
+      case "configuracion": return <Configuracion rol={rol} />;
       default: return <Placeholder label={MODULE_LABELS[route] || "Módulo"} />;
     }
   };
 
+  if (rolLoading) {
+    return (
+      <div className="boot-screen">
+        <div className="boot-logo">VIVE <span>TELECOM</span></div>
+        <div className="boot-label">Verificando permisos…</div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
-      <Sidebar current={route} onNavigate={navigate} open={sidebarOpen} />
+      <Sidebar current={route} onNavigate={navigate} open={sidebarOpen} rol={rol} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
         <Topbar
           moduleLabel={MODULE_LABELS[route] || "Módulo"}

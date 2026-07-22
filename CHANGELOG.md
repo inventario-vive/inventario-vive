@@ -3,6 +3,37 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.9.0] — Usuarios y roles
+
+### Agregado
+- Sección **Usuarios y roles** dentro de Configuración (solo visible para
+  administradores): crear cuentas nuevas (se dan de alta directamente en
+  Firebase Authentication desde la propia interfaz, usando una instancia
+  secundaria de Firebase para no cerrar la sesión del admin), asignar rol
+  (Administrador / Editor / Solo lectura), activar o desactivar el acceso
+  de alguien sin borrar su cuenta, y quitar el rol asignado.
+- Tres roles: **Administrador** (acceso total, incluida esta pantalla),
+  **Editor** (puede crear/editar) y **Solo lectura** (solo consulta). El
+  primer usuario que ingresa al sistema arranca automáticamente como
+  administrador para poder configurar el resto.
+- Un usuario desactivado es desconectado automáticamente al intentar
+  ingresar.
+- `firestore.rules` actualizado: solo un administrador (verificado del
+  lado del servidor, no solo en la interfaz) puede asignar o modificar
+  roles de otras personas.
+
+### Notas / limitaciones
+- La app no puede **eliminar** cuentas de Firebase Authentication por sí
+  sola (requeriría un servidor con privilegios de administrador, que
+  decidimos no usar). "Quitar" un usuario en esta pantalla revoca su rol
+  (vuelve a "solo lectura"), pero la cuenta en sí sigue existiendo — para
+  borrarla del todo hay que hacerlo manualmente en Firebase Console.
+- Granularidad de permisos: por ahora los roles Editor/Lector controlan el
+  acceso a la pantalla de Configuración y el arranque de sesión; todavía
+  no restringen botón por botón en cada módulo (por ejemplo, un Editor
+  puede eliminar registros igual que un Admin). Se puede ir ajustando
+  módulo por módulo si hace falta más adelante.
+
 ## [0.8.1] — Logo sin depender de Firebase Storage
 
 ### Cambiado

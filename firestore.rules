@@ -3,11 +3,35 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Regla base: solo usuarios autenticados (email/contraseña) del
-    // sistema pueden leer y escribir. Ajustar por colección cuando
-    // se incorporen roles (ej: solo admin puede eliminar empresas).
+    function estaLogueado() {
+      return request.auth != null;
+    }
+    function miEmail() {
+      return request.auth.token.email;
+    }
+    function miDocUsuario() {
+      return get(/databases/$(database)/documents/usuarios/$(miEmail()));
+    }
+    function esAdmin() {
+      return estaLogueado()
+        && exists(/databases/$(database)/documents/usuarios/$(miEmail()))
+        && miDocUsuario().data.rol == 'admin';
+    }
+
+    // Colección de roles: solo un admin puede crear/editar/quitar roles de
+    // otras personas. Se permite auto-registrarse una única vez (cuando
+    // todavía no existe un documento propio) para poder arrancar el sistema
+    // la primera vez, sin quedar bloqueado antes de tener un admin.
+    match /usuarios/{email} {
+      allow read: if estaLogueado();
+      allow write: if esAdmin()
+        || (estaLogueado() && email == miEmail() && !exists(/databases/$(database)/documents/usuarios/$(miEmail())));
+    }
+
+    // Regla base para el resto de las colecciones: cualquier usuario
+    // autenticado puede leer y escribir.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if estaLogueado();
     }
 
   }

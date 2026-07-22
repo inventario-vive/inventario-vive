@@ -27,6 +27,14 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// Instancia secundaria de Firebase, usada únicamente para crear cuentas de
+// usuario nuevas desde la pantalla de administración sin cerrar la sesión
+// del administrador que las está creando (createUserWithEmailAndPassword
+// inicia sesión automáticamente como el usuario recién creado en la
+// instancia que se use, por eso se aísla en una app secundaria).
+const secondaryApp = firebase.initializeApp(firebaseConfig, "Secondary");
+const secondaryAuth = secondaryApp.auth();
+
 // Habilita persistencia de sesión en el navegador
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 

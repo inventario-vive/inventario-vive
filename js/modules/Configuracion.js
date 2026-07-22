@@ -149,7 +149,273 @@ function LogoUploader() {
   );
 }
 
-function Configuracion() {
+const ROLES = [
+  { value: "admin", label: "Administrador", desc: "Acceso completo, incluida la gestión de usuarios." },
+  { value: "editor", label: "Editor", desc: "Puede crear y editar, sin eliminar ni gestionar usuarios." },
+  { value: "lector", label: "Solo lectura", desc: "Puede consultar, sin crear ni modificar nada." },
+];
+
+function generarPassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let pass = "";
+  for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+  return pass;
+}
+
+function NuevoUsuarioForm({ onCancel, onCreated }) {
+  const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [rol, setRol] = useState("editor");
+  const [password, setPassword] = useState(generarPassword());
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+    setSaving(true);
+    try {
+      // Se crea la cuenta en una instancia secundaria de Firebase para no
+      // cerrar la sesión del administrador que la está creando.
+      await secondaryAuth.createUserWithEmailAndPassword(email, password);
+      await secondaryAuth.signOut();
+
+      await db.collection("usuarios").doc(email).set({
+        email,
+        nombre,
+        rol,
+        activo: true,
+        creadoEn: serverTimestamp(),
+        creadoPor: auth.currentUser?.email || "—",
+      });
+
+      onCreated({ email, password });
+    } catch (err) {
+      console.error(err);
+      if (err.code === "auth/email-already-in-use") {
+        setError("Ya existe una cuenta con ese correo. Si querés asignarle un rol, buscala en la lista de abajo.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("El correo ingresado no es válido.");
+      } else if (err.code === "auth/weak-password") {
+        setError("La contraseña es muy débil (mínimo 6 caracteres).");
+      } else {
+        setError("Ocurrió un error al crear el usuario.");
+      }
+    }
+    setSaving(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="form-block">
+        <div className="form-grid">
+          <div className="form-field full">
+            <label>Correo electrónico</label>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="usuario@vivetelecom.com.py" />
+          </div>
+          <div className="form-field full">
+            <label>Nombre completo</label>
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </div>
+          <div className="form-field">
+            <label>Rol</label>
+            <select value={rol} onChange={(e) => setRol(e.target.value)}>
+              {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Contraseña inicial</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Button variant="secondary" size="sm" type="button" onClick={() => setPassword(generarPassword())}>Generar</Button>
+            </div>
+            <span className="form-hint">Compartísela a la persona para que inicie sesión. No se envía por correo automáticamente.</span>
+          </div>
+        </div>
+      </div>
+
+      {error && <div className="login-error" style={{ marginBottom: 14 }}>{error}</div>}
+
+      <div className="modal-footer" style={{ padding: 0, border: "none", marginTop: 6 }}>
+        <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Creando…" : "Crear usuario"}</Button>
+      </div>
+    </form>
+  );
+}
+
+function EditarUsuarioForm({ usuario, onCancel, onSaved }) {
+  const [nombre, setNombre] = useState(usuario.nombre || "");
+  const [rol, setRol] = useState(usuario.rol || "lector");
+  const [activo, setActivo] = useState(usuario.activo !== false);
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await db.collection("usuarios").doc(usuario.email).update({
+        nombre, rol, activo, actualizadoEn: serverTimestamp(),
+      });
+      onSaved();
+    } catch (err) {
+      console.error(err);
+      alert("Ocurrió un error al guardar los cambios.");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div className="form-block">
+        <div className="form-grid">
+          <div className="form-field full">
+            <label>Correo</label>
+            <input value={usuario.email} disabled />
+          </div>
+          <div className="form-field full">
+            <label>Nombre completo</label>
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </div>
+          <div className="form-field">
+            <label>Rol</label>
+            <select value={rol} onChange={(e) => setRol(e.target.value)}>
+              {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Acceso</label>
+            <select value={activo ? "1" : "0"} onChange={(e) => setActivo(e.target.value === "1")}>
+              <option value="1">Activo</option>
+              <option value="0">Desactivado (no puede ingresar)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div className="modal-footer" style={{ padding: 0, border: "none", marginTop: 6 }}>
+        <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar"}</Button>
+      </div>
+    </form>
+  );
+}
+
+function GestionUsuarios() {
+  const { data: usuarios, loading } = useCollection("usuarios", { orderByField: "email" });
+  const [showNuevo, setShowNuevo] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [toRemove, setToRemove] = useState(null);
+  const [credencialesNuevas, setCredencialesNuevas] = useState(null);
+
+  const handleRemove = async () => {
+    await db.collection("usuarios").doc(toRemove.email).delete();
+    setToRemove(null);
+  };
+
+  return (
+    <div className="card card-pad" style={{ marginTop: 16 }}>
+      <div className="page-header" style={{ marginBottom: 14 }}>
+        <div>
+          <div className="card-title" style={{ marginBottom: 4 }}>Usuarios y roles</div>
+          <p style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
+            Crear una cuenta acá la da de alta directamente en Firebase Authentication.
+            Eliminar un usuario de esta lista revoca su rol (queda como "solo lectura"), pero
+            no borra la cuenta de Firebase — para eso hay que hacerlo manualmente en la consola.
+          </p>
+        </div>
+        <Button variant="primary" icon="user-plus" onClick={() => setShowNuevo(true)}>Nuevo usuario</Button>
+      </div>
+
+      <DataTable
+        emptyLabel={loading ? "Cargando usuarios…" : "Todavía no hay usuarios registrados con rol asignado."}
+        searchPlaceholder="Buscar por correo o nombre…"
+        columns={[
+          { key: "email", label: "Correo" },
+          { key: "nombre", label: "Nombre" },
+          { key: "rol", label: "Rol", render: (u) => ROLES.find((r) => r.value === u.rol)?.label || u.rol },
+          {
+            key: "activo", label: "Acceso",
+            render: (u) => u.activo === false
+              ? <span className="badge badge-dado_de_baja">Desactivado</span>
+              : <span className="badge badge-disponible">Activo</span>,
+          },
+          {
+            key: "acciones", label: "", sortable: false,
+            render: (row) => (
+              <div className="row-actions">
+                <span className="icon-btn" title="Editar" onClick={() => setEditing(row)}><Icon name="pencil" size={15} /></span>
+                <span className="icon-btn" title="Quitar rol" onClick={() => setToRemove(row)}><Icon name="trash-2" size={15} /></span>
+              </div>
+            ),
+          },
+        ]}
+        rows={usuarios}
+      />
+
+      {showNuevo && (
+        <Modal title="Nuevo usuario" onClose={() => setShowNuevo(false)}>
+          <NuevoUsuarioForm
+            onCancel={() => setShowNuevo(false)}
+            onCreated={(cred) => { setShowNuevo(false); setCredencialesNuevas(cred); }}
+          />
+        </Modal>
+      )}
+
+      {editing && (
+        <Modal title={`Editar usuario — ${editing.email}`} onClose={() => setEditing(null)}>
+          <EditarUsuarioForm usuario={editing} onCancel={() => setEditing(null)} onSaved={() => setEditing(null)} />
+        </Modal>
+      )}
+
+      {toRemove && (
+        <ConfirmDialog
+          title="Quitar rol de usuario"
+          message={`¿Confirma que desea quitar el rol de "${toRemove.email}"? Su cuenta de Firebase no se elimina, pero perderá acceso ampliado (quedará como solo lectura si vuelve a ingresar).`}
+          confirmLabel="Quitar"
+          danger
+          onClose={() => setToRemove(null)}
+          onConfirm={handleRemove}
+        />
+      )}
+
+      {credencialesNuevas && (
+        <Modal
+          title="Usuario creado"
+          onClose={() => setCredencialesNuevas(null)}
+          footer={<Button variant="primary" onClick={() => setCredencialesNuevas(null)}>Listo</Button>}
+        >
+          <p style={{ fontSize: 13.5, marginBottom: 12 }}>
+            Compartile estos datos a la persona para que inicie sesión (no se envían por correo automáticamente):
+          </p>
+          <div style={{ background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", padding: 14, fontSize: 13.5 }}>
+            <div><strong>Correo:</strong> {credencialesNuevas.email}</div>
+            <div><strong>Contraseña:</strong> {credencialesNuevas.password}</div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+function Configuracion({ rol }) {
+  if (rol !== "admin") {
+    return (
+      <div>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Configuración</h1>
+          </div>
+        </div>
+        <div className="placeholder-box">
+          <Icon name="lock" size={30} />
+          <h3>Sin permisos</h3>
+          <p>Este módulo es exclusivo para usuarios con rol Administrador.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -160,6 +426,7 @@ function Configuracion() {
       </div>
 
       <LogoUploader />
+      <GestionUsuarios />
 
       <div className="card card-pad" style={{ marginTop: 16 }}>
         <div className="card-title">Sistema</div>
@@ -175,11 +442,6 @@ function Configuracion() {
             </tr>
           </tbody>
         </table>
-        <p className="form-hint" style={{ marginTop: 12 }}>
-          La gestión de usuarios y permisos se administra por ahora desde Firebase Authentication
-          (consola de Firebase → Authentication → Users). Todo usuario autenticado tiene acceso
-          completo al sistema.
-        </p>
       </div>
     </div>
   );

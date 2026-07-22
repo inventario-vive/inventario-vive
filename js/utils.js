@@ -3,7 +3,7 @@
    ============================================================ */
 
 // Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
-const APP_VERSION = "0.8.1";
+const APP_VERSION = "0.9.0";
 
 const { useState, useEffect, useMemo, useCallback } = React;
 
@@ -48,12 +48,15 @@ function generarCodigoInterno(prefijo = "REC") {
   return `${prefijo}-${y}${m}${d}-${rand}`;
 }
 
-// Hook: suscripción en tiempo real a un documento individual de Firestore
+// Hook: suscripción en tiempo real a un documento individual de Firestore.
+// Si path es null/undefined, no se suscribe (útil mientras se espera el email del usuario).
 function useDoc(path) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!path);
 
   useEffect(() => {
+    if (!path) { setData(null); setLoading(false); return; }
+    setLoading(true);
     const unsubscribe = db.doc(path).onSnapshot(
       (snap) => {
         setData(snap.exists ? snap.data() : null);
@@ -159,6 +162,23 @@ function exportCSV(filename, rows, columns) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+// Hook: resuelve el rol del usuario actualmente logueado ('admin' | 'editor' | 'lector'),
+// consultando la colección "usuarios" (clave = email). Si todavía no existe ningún
+// registro (primer uso del sistema), el usuario logueado arranca como "admin"
+// para poder configurar el resto desde la pantalla de Usuarios.
+function useRolActual() {
+  const email = auth.currentUser?.email || null;
+  const { data: propio, loading: loadingPropio } = useDoc(email ? `usuarios/${email}` : null);
+  const { data: todos, loading: loadingTodos } = useCollection("usuarios");
+
+  const loading = loadingPropio || loadingTodos;
+  if (loading || !email) return { rol: null, activo: true, loading: true };
+
+  if (propio) return { rol: propio.rol || "lector", activo: propio.activo !== false, loading: false };
+  if (todos.length === 0) return { rol: "admin", activo: true, loading: false };
+  return { rol: "lector", activo: true, loading: false };
 }
 
 function initials(name) {

@@ -253,8 +253,12 @@ const MENU_GROUPS = [
   },
 ];
 
-function Sidebar({ current, onNavigate, open }) {
+function Sidebar({ current, onNavigate, open, rol }) {
   const { data: config } = useDoc("configuracion/general");
+  const grupos = MENU_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => item.key !== "configuracion" || rol === "admin"),
+  }));
   return (
     <aside className={`sidebar ${open ? "open" : ""}`}>
       <div className="sidebar-logo">
@@ -265,7 +269,7 @@ function Sidebar({ current, onNavigate, open }) {
         )}
         <span className="version-badge">v{APP_VERSION}</span>
       </div>
-      {MENU_GROUPS.map((group) => (
+      {grupos.map((group) => (
         <div className="sidebar-section" key={group.title}>
           <div className="sidebar-section-title">{group.title}</div>
           {group.items.map((item) => (
