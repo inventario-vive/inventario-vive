@@ -3,6 +3,17 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.9.2] — Asignar rol a cuenta existente
+
+### Agregado
+- Nuevo botón **"Asignar rol a cuenta existente"** en Usuarios: permite que
+  un administrador le dé un rol a una cuenta de Firebase que ya existía
+  antes de tener este sistema (por ejemplo, la primera cuenta creada
+  manualmente en la consola), sin intentar crearla de nuevo. Cubre el caso
+  de quedar sin admin cuando ya existe otro admin en el sistema y la
+  autoreparación automática ya no aplica (funciona correctamente como
+  medida de seguridad, pero requiere este paso manual una vez).
+
 ## [0.9.1] — Corrección: pérdida de rol admin
 
 ### Corregido

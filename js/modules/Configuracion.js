@@ -245,6 +245,68 @@ function NuevoUsuarioForm({ onCancel, onCreated }) {
   );
 }
 
+function AsignarRolExistenteForm({ onCancel, onSaved }) {
+  const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [rol, setRol] = useState("admin");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSaving(true);
+    try {
+      await db.collection("usuarios").doc(email.trim()).set({
+        email: email.trim(),
+        nombre,
+        rol,
+        activo: true,
+        creadoEn: serverTimestamp(),
+        creadoPor: auth.currentUser?.email || "—",
+      });
+      onSaved();
+    } catch (err) {
+      console.error(err);
+      setError("Ocurrió un error al guardar. Revisá que el correo esté bien escrito.");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 14 }}>
+        Usá esto para cuentas que ya existen en Firebase Authentication pero todavía no tienen
+        un rol asignado en el sistema (por ejemplo, cuentas creadas manualmente antes de tener
+        esta pantalla). No crea ninguna cuenta nueva, solo le asigna un rol.
+      </p>
+      <div className="form-block">
+        <div className="form-grid">
+          <div className="form-field full">
+            <label>Correo de la cuenta existente</label>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="usuario@vivetelecom.com.py" />
+          </div>
+          <div className="form-field full">
+            <label>Nombre completo</label>
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </div>
+          <div className="form-field full">
+            <label>Rol</label>
+            <select value={rol} onChange={(e) => setRol(e.target.value)}>
+              {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+      {error && <div className="login-error" style={{ marginBottom: 14 }}>{error}</div>}
+      <div className="modal-footer" style={{ padding: 0, border: "none", marginTop: 6 }}>
+        <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+        <Button variant="primary" type="submit" disabled={saving}>{saving ? "Guardando…" : "Asignar rol"}</Button>
+      </div>
+    </form>
+  );
+}
+
 function EditarUsuarioForm({ usuario, onCancel, onSaved }) {
   const [nombre, setNombre] = useState(usuario.nombre || "");
   const [rol, setRol] = useState(usuario.rol || "lector");
@@ -304,6 +366,7 @@ function EditarUsuarioForm({ usuario, onCancel, onSaved }) {
 function GestionUsuarios() {
   const { data: usuarios, loading } = useCollection("usuarios", { orderByField: "email" });
   const [showNuevo, setShowNuevo] = useState(false);
+  const [showExistente, setShowExistente] = useState(false);
   const [editing, setEditing] = useState(null);
   const [toRemove, setToRemove] = useState(null);
   const [credencialesNuevas, setCredencialesNuevas] = useState(null);
@@ -324,7 +387,10 @@ function GestionUsuarios() {
             no borra la cuenta de Firebase — para eso hay que hacerlo manualmente en la consola.
           </p>
         </div>
-        <Button variant="primary" icon="user-plus" onClick={() => setShowNuevo(true)}>Nuevo usuario</Button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button variant="secondary" icon="link" onClick={() => setShowExistente(true)}>Asignar rol a cuenta existente</Button>
+          <Button variant="primary" icon="user-plus" onClick={() => setShowNuevo(true)}>Nuevo usuario</Button>
+        </div>
       </div>
 
       <DataTable
@@ -359,6 +425,12 @@ function GestionUsuarios() {
             onCancel={() => setShowNuevo(false)}
             onCreated={(cred) => { setShowNuevo(false); setCredencialesNuevas(cred); }}
           />
+        </Modal>
+      )}
+
+      {showExistente && (
+        <Modal title="Asignar rol a cuenta existente" onClose={() => setShowExistente(false)}>
+          <AsignarRolExistenteForm onCancel={() => setShowExistente(false)} onSaved={() => setShowExistente(false)} />
         </Modal>
       )}
 
