@@ -288,8 +288,64 @@ function Sidebar({ current, onNavigate, open, rol }) {
   );
 }
 
+// Días de anticipación para avisar sobre mantenimientos próximos o vencidos,
+// y días máximos que un mantenimiento puede quedar "en curso" sin generar alerta.
+const DIAS_ALERTA_MANTENIMIENTO = 15;
+
+function calcularNotificaciones(recursos, mantenimientos) {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const lista = [];
+
+  recursos.forEach((r) => {
+    if (!r.proximoMantenimiento) return;
+    if (["dado_de_baja", "en_mantenimiento", "en_reparacion"].includes(r.estado)) return;
+    const fecha = new Date(r.proximoMantenimiento + "T00:00:00");
+    if (isNaN(fecha.getTime())) return;
+    const diffDias = Math.round((fecha - hoy) / (1000 * 60 * 60 * 24));
+    if (diffDias <= DIAS_ALERTA_MANTENIMIENTO) {
+      lista.push({
+        id: `prox-${r.id}`,
+        ruta: "recursos",
+        vencido: diffDias < 0,
+        texto: diffDias < 0
+          ? `${r.codigo} — mantenimiento vencido hace ${Math.abs(diffDias)} día(s)`
+          : diffDias === 0
+            ? `${r.codigo} — mantenimiento programado para hoy`
+            : `${r.codigo} — mantenimiento programado en ${diffDias} día(s)`,
+      });
+    }
+  });
+
+  mantenimientos.forEach((m) => {
+    if (m.estado !== "en_curso") return;
+    const inicio = new Date(m.fechaInicio + "T00:00:00");
+    if (isNaN(inicio.getTime())) return;
+    const diffDias = Math.round((hoy - inicio) / (1000 * 60 * 60 * 24));
+    if (diffDias >= DIAS_ALERTA_MANTENIMIENTO) {
+      lista.push({
+        id: `curso-${m.id}`,
+        ruta: "mantenimiento",
+        vencido: true,
+        texto: `${m.recursoSnapshot?.codigo || "Recurso"} — en mantenimiento hace ${diffDias} día(s) sin finalizar`,
+      });
+    }
+  });
+
+  return lista;
+}
+
 // ---------- Topbar ----------
-function Topbar({ moduleLabel, user, onToggleSidebar, onLogout }) {
+function Topbar({ moduleLabel, user, onToggleSidebar, onLogout, notificaciones, onNavigate }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+
+  useEffect(() => {
+    const onClickOutside = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -302,7 +358,55 @@ function Topbar({ moduleLabel, user, onToggleSidebar, onLogout }) {
         <input placeholder="Buscar recursos, funcionarios, empresas…" />
       </div>
       <div className="topbar-right">
-        <div className="topbar-icon-btn"><Icon name="bell" size={18} /></div>
+        <div ref={ref} style={{ position: "relative" }}>
+          <div className="topbar-icon-btn" onClick={() => setOpen((v) => !v)} style={{ position: "relative" }}>
+            <Icon name="bell" size={18} />
+            {notificaciones.length > 0 && (
+              <span style={{
+                position: "absolute", top: 2, right: 2,
+                background: "var(--color-danger)", color: "#fff",
+                fontSize: 10, fontWeight: 700, borderRadius: 999,
+                minWidth: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0 3px",
+              }}>
+                {notificaciones.length > 9 ? "9+" : notificaciones.length}
+              </span>
+            )}
+          </div>
+          {open && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 8px)",
+              width: 320, maxHeight: 360, overflowY: "auto",
+              background: "#fff", border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)", boxShadow: "var(--shadow-lg)", zIndex: 50,
+            }}>
+              <div style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13, borderBottom: "1px solid var(--color-border)" }}>
+                Notificaciones
+              </div>
+              {notificaciones.length === 0 ? (
+                <div style={{ padding: 20, fontSize: 13, color: "var(--color-text-secondary)", textAlign: "center" }}>
+                  Sin novedades por ahora.
+                </div>
+              ) : (
+                notificaciones.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => { setOpen(false); onNavigate(n.ruta); }}
+                    style={{
+                      padding: "10px 14px", fontSize: 13, cursor: "pointer",
+                      borderBottom: "1px solid var(--color-border)", display: "flex", gap: 8, alignItems: "flex-start",
+                    }}
+                  >
+                    <span style={{ color: n.vencido ? "var(--color-danger)" : "var(--state-mantenimiento)", marginTop: 2 }}>
+                      <Icon name={n.vencido ? "alert-circle" : "clock"} size={14} />
+                    </span>
+                    <span>{n.texto}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         <div className="topbar-user" onClick={onLogout} title="Cerrar sesión">
           <div className="topbar-avatar">{initials(user?.email)}</div>
         </div>

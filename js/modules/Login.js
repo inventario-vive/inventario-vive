@@ -23,7 +23,10 @@ function Login() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo">VIVE <span>TELECOM</span></div>
+        <div className="login-logo" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          VIVE <span>TELECOM</span>
+          <span className="version-badge" style={{ color: "var(--color-text-secondary)", borderColor: "var(--color-border)", background: "var(--color-bg)" }}>v{APP_VERSION}</span>
+        </div>
         <div className="login-subtitle">Sistema de Inventario de Recursos</div>
 
         {error && <div className="login-error">{error}</div>}

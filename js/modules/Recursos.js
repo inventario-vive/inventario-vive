@@ -24,6 +24,7 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
       departamentoId: "",
       responsableId: "",
       fechaAdquisicion: "",
+      proximoMantenimiento: "",
       observaciones: "",
     }
   );
@@ -184,6 +185,11 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
           <div className="form-field">
             <label>Fecha de adquisición</label>
             <input type="date" value={form.fechaAdquisicion} onChange={setField("fechaAdquisicion")} />
+          </div>
+          <div className="form-field">
+            <label>Próximo mantenimiento (opcional)</label>
+            <input type="date" value={form.proximoMantenimiento} onChange={setField("proximoMantenimiento")} />
+            <span className="form-hint">Si lo cargás, la campana avisa cuando esté vencido o próximo.</span>
           </div>
           <div className="form-field full">
             <label>Observaciones</label>

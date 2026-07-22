@@ -3,6 +3,22 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.10.0] — Notificaciones y mantenimiento programado
+
+### Agregado
+- Nuevo campo **"Próximo mantenimiento"** en la ficha de Recursos, para
+  programar cuándo le toca el próximo mantenimiento preventivo.
+- Al finalizar un mantenimiento como "reparado/operativo", se puede cargar
+  la próxima fecha sugerida, que queda guardada automáticamente en la
+  ficha del recurso.
+- La **campana** de la barra superior ahora es funcional: muestra un
+  contador y, al hacer clic, un panel con dos tipos de aviso:
+  - Recursos con mantenimiento vencido o próximo (dentro de 15 días).
+  - Mantenimientos "en curso" hace más de 15 días sin finalizar.
+  Cada aviso lleva directo al módulo correspondiente (Recursos o
+  Mantenimiento) al hacer clic.
+- Badge de versión agregado también a la pantalla de login.
+
 ## [0.9.2] — Asignar rol a cuenta existente
 
 ### Agregado

@@ -28,6 +28,13 @@ function AppShell({ user }) {
   const [route, setRoute] = useState(getRouteFromHash());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { rol, activo, loading: rolLoading } = useRolActual();
+  const { data: recursosParaAlertas } = useCollection("recursos");
+  const { data: mantenimientosParaAlertas } = useCollection("mantenimientos");
+
+  const notificaciones = useMemo(
+    () => calcularNotificaciones(recursosParaAlertas, mantenimientosParaAlertas),
+    [recursosParaAlertas, mantenimientosParaAlertas]
+  );
 
   useEffect(() => {
     const onHashChange = () => setRoute(getRouteFromHash());
@@ -86,6 +93,8 @@ function AppShell({ user }) {
           user={user}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           onLogout={() => { if (window.confirm("¿Cerrar sesión?")) auth.signOut(); }}
+          notificaciones={notificaciones}
+          onNavigate={navigate}
         />
         <div className="content">{renderModule()}</div>
       </div>

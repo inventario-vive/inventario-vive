@@ -119,6 +119,7 @@ function MantenimientoForm({ recursos, onCancel, onSaved }) {
 function FinalizarMantenimientoForm({ registro, onCancel, onSaved }) {
   const [resultado, setResultado] = useState("reparado_operativo");
   const [fechaFin, setFechaFin] = useState(new Date().toISOString().slice(0, 10));
+  const [proximoMantenimiento, setProximoMantenimiento] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -153,6 +154,9 @@ function FinalizarMantenimientoForm({ registro, onCancel, onSaved }) {
 
         const updateRecurso = { estado: nuevoEstado, actualizadoEn: serverTimestamp() };
         if (limpiarResponsable) updateRecurso.responsableId = "";
+        if (resultado === "reparado_operativo" && proximoMantenimiento) {
+          updateRecurso.proximoMantenimiento = proximoMantenimiento;
+        }
 
         await db.collection("recursos").doc(registro.recursoId).update(updateRecurso);
         await registrarHistorial(registro.recursoId, {
@@ -186,6 +190,13 @@ function FinalizarMantenimientoForm({ registro, onCancel, onSaved }) {
             <div className="form-field full">
               <label>Fecha de finalización</label>
               <input type="date" required value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} />
+            </div>
+          )}
+          {resultado === "reparado_operativo" && (
+            <div className="form-field full">
+              <label>Próxima fecha de mantenimiento (opcional)</label>
+              <input type="date" value={proximoMantenimiento} onChange={(e) => setProximoMantenimiento(e.target.value)} />
+              <span className="form-hint">Si la cargás, queda guardada en la ficha del recurso para la próxima alerta.</span>
             </div>
           )}
           <div className="form-field full">
