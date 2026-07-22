@@ -3,7 +3,7 @@
    ============================================================ */
 
 // Versión actual del sistema (mantener sincronizada con CHANGELOG.md)
-const APP_VERSION = "0.9.0";
+const APP_VERSION = "0.9.1";
 
 const { useState, useEffect, useMemo, useCallback } = React;
 
@@ -174,10 +174,31 @@ function useRolActual() {
   const { data: todos, loading: loadingTodos } = useCollection("usuarios");
 
   const loading = loadingPropio || loadingTodos;
-  if (loading || !email) return { rol: null, activo: true, loading: true };
 
+  // Autoarranque / autoreparación: si este usuario no tiene documento propio
+  // y todavía no existe NINGÚN administrador en el sistema, se lo registra
+  // como admin de forma persistente. Cubre tanto el primer ingreso (colección
+  // vacía) como el caso en que ya se crearon otros usuarios sin rol admin
+  // antes de que el primero quedara guardado.
+  useEffect(() => {
+    if (loading || !email || propio) return;
+    const hayAdmin = todos.some((u) => u.rol === "admin");
+    if (!hayAdmin) {
+      db.collection("usuarios").doc(email).set({
+        email,
+        nombre: "",
+        rol: "admin",
+        activo: true,
+        creadoEn: serverTimestamp(),
+        creadoPor: "sistema (autoreparación)",
+      }).catch((err) => console.error("No se pudo inicializar el usuario administrador:", err));
+    }
+    // eslint-disable-next-line
+  }, [loading, email, propio, todos]);
+
+  if (loading || !email) return { rol: null, activo: true, loading: true };
   if (propio) return { rol: propio.rol || "lector", activo: propio.activo !== false, loading: false };
-  if (todos.length === 0) return { rol: "admin", activo: true, loading: false };
+  if (!todos.some((u) => u.rol === "admin")) return { rol: "admin", activo: true, loading: false };
   return { rol: "lector", activo: true, loading: false };
 }
 

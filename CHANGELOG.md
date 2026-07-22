@@ -3,6 +3,15 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.9.1] — Corrección: pérdida de rol admin
+
+### Corregido
+- El primer usuario del sistema arrancaba como admin solo "en memoria",
+  sin guardarse en Firestore. Al crear cualquier otro usuario, perdía el
+  rol de administrador. Ahora se persiste automáticamente apenas se
+  detecta que no hay ningún administrador registrado (autoreparación:
+  también corrige cuentas que ya quedaron en este estado).
+
 ## [0.9.0] — Usuarios y roles
 
 ### Agregado
