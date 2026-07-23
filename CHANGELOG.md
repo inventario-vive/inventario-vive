@@ -3,6 +3,20 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 Versionado semántico: `MAYOR.MENOR.PARCHE` (ej. `0.3.0`).
 
+## [0.11.0] — Atributos específicos por tipo de recurso
+
+### Agregado
+- La ficha de Recursos ahora muestra un bloque de **atributos propios
+  según el tipo elegido** (ej. Monitor: tamaño/resolución/voltaje; Línea
+  telefónica: operador/plan/SIM-eSIM/número; Licencia de software:
+  proveedor/tipo/puestos/vencimiento; etc.), definidos en el mapa
+  `TIPO_ATRIBUTOS` de `js/modules/Recursos.js`. Se guardan en un campo
+  `atributos` dentro del recurso, sin necesidad de columnas fijas por tipo.
+- Para agregar o modificar atributos de un tipo en el futuro, alcanza con
+  editar ese mapa — no requiere cambios en el resto del formulario.
+- Al cambiar el tipo de recurso en el formulario, los atributos se
+  reinician (para no arrastrar valores de un tipo distinto).
+
 ## [0.10.0] — Notificaciones y mantenimiento programado
 
 ### Agregado

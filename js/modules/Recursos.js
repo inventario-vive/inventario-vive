@@ -9,6 +9,94 @@ const TIPOS_RECURSO = [
   "Licencia de software", "Equipo especial",
 ];
 
+// Atributos propios de cada tipo de recurso (además de Marca/Modelo, que ya
+// son campos base para todo hardware). Se guardan en el campo "atributos"
+// del recurso. Para agregar o modificar atributos de un tipo, alcanza con
+// editar este mapa — no hace falta tocar el resto del formulario.
+const TIPO_ATRIBUTOS = {
+  "Computadora": [
+    { key: "procesador", label: "Procesador", type: "text" },
+    { key: "ram", label: "Memoria RAM", type: "text" },
+    { key: "almacenamiento", label: "Almacenamiento", type: "text" },
+    { key: "sistemaOperativo", label: "Sistema operativo", type: "text" },
+  ],
+  "Notebook": [
+    { key: "procesador", label: "Procesador", type: "text" },
+    { key: "ram", label: "Memoria RAM", type: "text" },
+    { key: "almacenamiento", label: "Almacenamiento", type: "text" },
+    { key: "sistemaOperativo", label: "Sistema operativo", type: "text" },
+  ],
+  "Monitor": [
+    { key: "tamano", label: "Tamaño (pulgadas)", type: "text" },
+    { key: "resolucion", label: "Resolución", type: "text" },
+    { key: "voltaje", label: "Voltaje", type: "select", options: ["110V", "220V", "Bivolt"] },
+  ],
+  "Impresora": [
+    { key: "tipoImpresion", label: "Tipo", type: "select", options: ["Láser", "Inkjet", "Matriz de punto"] },
+    { key: "conexion", label: "Conexión", type: "select", options: ["USB", "Red", "WiFi"] },
+    { key: "color", label: "Color", type: "select", options: ["Color", "Monocromática"] },
+  ],
+  "Router": [
+    { key: "puertos", label: "Cantidad de puertos", type: "number" },
+    { key: "ipGestion", label: "IP de gestión", type: "text" },
+  ],
+  "Switch": [
+    { key: "puertos", label: "Cantidad de puertos", type: "number" },
+    { key: "ipGestion", label: "IP de gestión", type: "text" },
+  ],
+  "Access Point": [
+    { key: "puertos", label: "Cantidad de puertos", type: "number" },
+    { key: "ipGestion", label: "IP de gestión", type: "text" },
+  ],
+  "Cámara CCTV": [
+    { key: "resolucion", label: "Resolución", type: "text" },
+    { key: "canales", label: "Canales", type: "number" },
+    { key: "almacenamiento", label: "Almacenamiento", type: "text" },
+  ],
+  "DVR/NVR": [
+    { key: "resolucion", label: "Resolución", type: "text" },
+    { key: "canales", label: "Canales", type: "number" },
+    { key: "almacenamiento", label: "Almacenamiento", type: "text" },
+  ],
+  "Servidor": [
+    { key: "procesador", label: "Procesador", type: "text" },
+    { key: "ram", label: "Memoria RAM", type: "text" },
+    { key: "almacenamiento", label: "Almacenamiento", type: "text" },
+    { key: "rolServidor", label: "Rol del servidor", type: "text" },
+  ],
+  "Teléfono IP": [
+    { key: "extension", label: "Extensión", type: "text" },
+  ],
+  "Celular": [
+    { key: "imei", label: "IMEI", type: "text" },
+    { key: "sistemaOperativo", label: "Sistema operativo", type: "text" },
+    { key: "numeroLinea", label: "Número de línea asociado", type: "text" },
+  ],
+  "Tablet": [
+    { key: "imei", label: "IMEI (si tiene datos)", type: "text" },
+    { key: "sistemaOperativo", label: "Sistema operativo", type: "text" },
+  ],
+  "Línea telefónica": [
+    { key: "operador", label: "Operador", type: "text" },
+    { key: "plan", label: "Plan", type: "text" },
+    { key: "tipoSim", label: "Tipo", type: "select", options: ["SIM", "eSIM"] },
+    { key: "numero", label: "Número", type: "text" },
+  ],
+  "Correo electrónico": [
+    { key: "dominio", label: "Dominio", type: "text" },
+    { key: "tipoLicencia", label: "Tipo de licencia", type: "select", options: ["Buzón", "Alias"] },
+  ],
+  "Licencia de software": [
+    { key: "proveedor", label: "Proveedor", type: "text" },
+    { key: "tipoLicencia", label: "Tipo de licencia", type: "text" },
+    { key: "cantidadPuestos", label: "Cantidad de puestos", type: "number" },
+    { key: "fechaVencimiento", label: "Fecha de vencimiento", type: "date" },
+  ],
+  "Equipo especial": [
+    { key: "descripcionTecnica", label: "Descripción técnica", type: "textarea" },
+  ],
+};
+
 function RecursoForm({ initial, empresas, sucursales, departamentos, funcionarios, onCancel, onSaved }) {
   const [form, setForm] = useState(
     initial || {
@@ -29,6 +117,18 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
     }
   );
   const [saving, setSaving] = useState(false);
+  const [atributos, setAtributos] = useState(initial?.atributos || {});
+
+  const setAtributo = (key) => (e) => setAtributos({ ...atributos, [key]: e.target.value });
+
+  const handleTipoChange = (e) => {
+    const nuevoTipo = e.target.value;
+    // Si el tipo cambia, los atributos anteriores ya no corresponden (son de otro tipo)
+    if (nuevoTipo !== form.tipo) setAtributos({});
+    setForm({ ...form, tipo: nuevoTipo });
+  };
+
+  const atributosDelTipo = TIPO_ATRIBUTOS[form.tipo] || [];
 
   const setField = (field) => (e) => {
     const value = e.target.value;
@@ -72,7 +172,7 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { ...form };
+      const payload = { ...form, atributos };
       if (initial?.id) {
         const prevEstado = initial.estado;
         await db.collection("recursos").doc(initial.id).update({
@@ -122,7 +222,7 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
           </div>
           <div className="form-field">
             <label>Tipo de recurso</label>
-            <select value={form.tipo} onChange={setField("tipo")}>
+            <select value={form.tipo} onChange={handleTipoChange}>
               {TIPOS_RECURSO.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
@@ -197,6 +297,33 @@ function RecursoForm({ initial, empresas, sucursales, departamentos, funcionario
           </div>
         </div>
       </div>
+
+      {atributosDelTipo.length > 0 && (
+        <div className="form-block">
+          <div className="form-block-title">Atributos de {form.tipo}</div>
+          <div className="form-grid">
+            {atributosDelTipo.map((attr) => (
+              <div className={`form-field ${attr.type === "textarea" ? "full" : ""}`} key={attr.key}>
+                <label>{attr.label}</label>
+                {attr.type === "select" ? (
+                  <select value={atributos[attr.key] || ""} onChange={setAtributo(attr.key)}>
+                    <option value="">Seleccionar…</option>
+                    {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : attr.type === "textarea" ? (
+                  <textarea value={atributos[attr.key] || ""} onChange={setAtributo(attr.key)} />
+                ) : (
+                  <input
+                    type={attr.type === "number" ? "number" : attr.type === "date" ? "date" : "text"}
+                    value={atributos[attr.key] || ""}
+                    onChange={setAtributo(attr.key)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="modal-footer" style={{ padding: 0, border: "none", marginTop: 6 }}>
         <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
